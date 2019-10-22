@@ -9,7 +9,7 @@ from azure.cognitiveservices.vision.face.models import TrainingStatusType, Perso
 # https://docs.microsoft.com/en-us/azure/cognitive-services/face/overview
 # https://westus.dev.cognitive.microsoft.com/docs/services/563879b61984550e40cbbe8d/operations/563879b61984550f30395236
 # https://docs.microsoft.com/en-us/azure/cognitive-services/face/quickstarts/python-sdk#find-similar-faces
-# Add environmental variables (Mac OS): "export COGNITIVE_SERVICE_KEY=your-key"
+# Add environmental variables to .bash_profile (nano): "export COGNITIVE_SERVICE_KEY=your-key" , then run ~/ source .bash_profile
 
 # Create an authenticated FaceClient.
 (KEY, ENDPOINT) = (os.environ['FACE_SUBSCRIPTION_KEY'], os.environ['FACE_ENDPOINT'])
@@ -33,12 +33,11 @@ def extract_face_ids(detectedFaces):
     return [face.face_id for face in detected_faces]
 
 def find_similar_faces(face_id,face_ids):
-    # Given query face's faceId, to search the similar-looking faces from a faceId array
+    # Given query face's face_id, to search the similar-looking faces from a face_id array
     similar_faces = face_client.face.find_similar(face_id=face_id, face_ids=face_ids)
     if not similar_faces[0]:
         raise Exception('No similar faces found detected')
     return similar_faces
-
 
 def get_rectangle(faceObject):
     # Convert width height to a point in a rectangle; returns a tuple of rectangle coordinates
@@ -61,12 +60,31 @@ def draw_rect_on_face(img,faceObject):
     draw.rectangle(get_rectangle(faceObject), outline='red')
     return img
 
-
 def show_detected_faces(img_url):
     # show preview of detected faces in an image
     detected_faces=detect_faces_from_img_url(img_url)
     img = get_img_from_url(img_url)
     for face in detected_faces:
         rect = get_rectangle(face)
-        draw_rect_on_face(rect,img,face)
+        draw_rect_on_face(img,face)
     img.show()
+
+list_of_faces=detect_faces_from_img_url(multi_face_image_url)
+list_of_faces_ids=[x.face_id for x in list_of_faces]
+target_face=detect_faces_from_img_url(single_face_img_url)[0]
+target_face_id=target_face.face_id
+
+show_detected_faces(single_face_img_url)
+
+for face_id in list_of_faces_ids:
+    print (face_id)
+print("--------------")
+print(target_face_id)
+print("--------------")
+similar_faces=find_similar_faces(target_face_id,list_of_faces_ids)
+for face in list_of_faces:
+    if face.face_id==similar_faces[0].face_id:
+        print(face.face_id)
+        img=get_img_from_url(multi_face_image_url)
+        img2=draw_rect_on_face(img,face)
+        img2.show()
